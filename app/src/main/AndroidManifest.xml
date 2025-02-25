@@ -20,6 +20,7 @@
         android:usesCleartextTraffic="true">
         <activity
             android:name=".ChooserActivity"
+            android:exported="true"
             android:excludeFromRecents="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -46,7 +47,7 @@
             android:name=".AboutUsActivity"
             android:exported="true" />
         <activity android:name=".CartListActivity" />
-        <activity android:name=".ProductListActivity">
+        <activity android:name=".ProductListActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -54,7 +55,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".LoginActivity" />
-        <activity android:name=".WebViewActivity">
+        <activity android:name=".WebViewActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -65,7 +66,7 @@
                     android:scheme="insecureshop" />
             </intent-filter>
         </activity>
-        <activity android:name=".WebView2Activity">
+        <activity android:name=".WebView2Activity" android:exported="true">
             <intent-filter>
                 <action android:name="com.insecureshop.action.WEBVIEW" />
                 <category android:name="android.intent.category.DEFAULT" />

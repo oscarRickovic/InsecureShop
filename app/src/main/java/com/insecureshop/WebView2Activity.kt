@@ -33,11 +33,11 @@ class WebView2Activity : AppCompatActivity() {
         webview.settings.allowUniversalAccessFromFileURLs = true
         webview.settings.userAgentString = USER_AGENT
         if (!intent.dataString.isNullOrBlank()) {
-            webview.loadUrl(intent.dataString)
+            webview.loadUrl(intent.dataString!!)
         } else if (!intent.data?.getQueryParameter("url").isNullOrBlank()) {
-            webview.loadUrl(intent.data?.getQueryParameter("url"))
+            intent.data?.getQueryParameter("url")?.let { webview.loadUrl(it) }
         } else if(!intent.extras?.getString("url").isNullOrEmpty()){
-            webview.loadUrl(intent.extras?.getString("url"))
+            intent.extras?.getString("url")?.let { webview.loadUrl(it) }
         }
     }
 }
