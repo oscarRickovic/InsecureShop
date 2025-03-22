@@ -29,10 +29,18 @@ object Prefs {
             sharedpreferences.edit().putString("username", value).apply()
         }
 
-    var password: String?
-        get() = sharedpreferences.getString("password","")
+    // Replace direct password storage with a session token
+    var sessionToken: String?
+        get() = sharedpreferences.getString("session_token","")
         set(value) {
-            sharedpreferences.edit().putString("password", value).apply()
+            sharedpreferences.edit().putString("session_token", value).apply()
+        }
+    
+    // Maintain this for backward compatibility but don't use it for actual password
+    var password: String?
+        get() = "" // Don't return actual password
+        set(value) {
+            // Don't store the password anymore
         }
 
     var productList: String?
@@ -40,7 +48,6 @@ object Prefs {
         set(value) {
             sharedpreferences.edit().putString("productList", value).apply()
         }
-
 
     fun clearAll(){
         sharedpreferences.edit().clear().apply()

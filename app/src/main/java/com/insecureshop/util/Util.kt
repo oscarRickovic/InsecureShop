@@ -4,24 +4,76 @@ import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.insecureshop.ProductDetail
+import com.insecureshop.util.SecurePreferences
+import java.security.MessageDigest
+import android.util.Base64
+import java.security.SecureRandom
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 object Util {
 
-    private fun getUserCreds(): HashMap<String,String> {
-        val userCreds = HashMap<String, String>()
-        userCreds["shopuser"] = "!ns3csh0p"
-        return userCreds
-    }
-
-    fun verifyUserNamePassword(username: String, password: String): Boolean {
-        if (getUserCreds().containsKey(username)) {
-            val passwordValue = getUserCreds()[username]
-            return passwordValue.equals(password)
-        } else {
+    fun verifyUserNamePassword(context: Context, username: String, password: String): Boolean {
+        // Get stored credentials from encrypted preferences
+        val securePrefs = SecurePreferences(context)
+        val storedUsername = securePrefs.getString("AUTH_USERNAME", "")
+        val storedPasswordHash = securePrefs.getString("AUTH_PASSWORD_HASH", "")
+        val storedSalt = securePrefs.getString("AUTH_SALT", "")
+        
+        // If no stored credentials, use default for initial setup only
+        if (storedUsername.isEmpty() || storedPasswordHash.isEmpty()) {
+            // Only for first-time setup - should implement proper registration
+            if (username == "admin" && password == "securePassword123") {
+                val salt = generateSalt()
+                val passwordHash = hashPassword(password, salt)
+                
+                // Store the credentials securely
+                securePrefs.putString("AUTH_USERNAME", username)
+                securePrefs.putString("AUTH_PASSWORD_HASH", passwordHash)
+                securePrefs.putString("AUTH_SALT", salt)
+                
+                return true
+            }
             return false
         }
+        
+        // For normal authentication - verify username and hash the provided password
+        if (username == storedUsername) {
+            val hashedPassword = hashPassword(password, storedSalt)
+            return secureTimeConstantCompare(hashedPassword, storedPasswordHash)
+        }
+        
+        return false
+    }
+
+    // Generate a random salt
+    private fun generateSalt(): String {
+        val random = SecureRandom()
+        val salt = ByteArray(16)
+        random.nextBytes(salt)
+        return Base64.encodeToString(salt, Base64.NO_WRAP)
+    }
+
+    // Hash password with salt using SHA-256
+    private fun hashPassword(password: String, salt: String): String {
+        val saltBytes = Base64.decode(salt, Base64.NO_WRAP)
+        val md = MessageDigest.getInstance("SHA-256")
+        md.update(saltBytes)
+        val hashedBytes = md.digest(password.toByteArray())
+        return Base64.encodeToString(hashedBytes, Base64.NO_WRAP)
+    }
+
+    // Time-constant comparison to prevent timing attacks
+    private fun secureTimeConstantCompare(a: String, b: String): Boolean {
+        if (a.length != b.length) {
+            return false
+        }
+        
+        var result = 0
+        for (i in a.indices) {
+            result = result or (a[i].toInt() xor b[i].toInt())
+        }
+        return result == 0
     }
 
     private fun getProductList(): ArrayList<ProductDetail> {
@@ -43,7 +95,7 @@ object Util {
     }
 
     fun getProductsPrefs(context: Context): List<ProductDetail> {
-        val products =  Prefs.getInstance(context).productList
+        val products = Prefs.getInstance(context).productList
         return Gson().fromJson(products, object : TypeToken<List<ProductDetail>>() {}.type)
     }
 

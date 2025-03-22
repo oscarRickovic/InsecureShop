@@ -1,11 +1,9 @@
 package com.insecureshop
 
 import android.Manifest
-import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -28,44 +26,39 @@ class LoginActivity : AppCompatActivity() {
                 requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE), 100)
             }
         }
-
     }
-
 
     fun onLogin(view: View) {
         val username = mBinding.edtUserName.text.toString()
         val password = mBinding.edtPassword.text.toString()
 
-        Log.d("userName", username)
-        Log.d("password", password)
+        // Remove insecure password logging
+        // Log.d("userName", username)
+        // Log.d("password", password)
 
-
-        var auth = Util.verifyUserNamePassword(username, password)
+        // Use the new secure authentication method
+        val auth = Util.verifyUserNamePassword(applicationContext, username, password)
         if (auth) {
+            // Store only what's needed for session management
             Prefs.getInstance(applicationContext).username = username
-            Prefs.getInstance(applicationContext).password = password
+            // Don't store the raw password anymore - use session token instead
+            Prefs.getInstance(applicationContext).sessionToken = generateSessionToken()
+            
             Util.saveProductList(this)
             val intent = Intent(this, ProductListActivity::class.java)
             startActivity(intent)
         } else {
-            for (info in packageManager.getInstalledPackages(0)) {
-                var packageName = info.packageName
-                if (packageName.startsWith("com.insecureshopapp")) {
-                    try {
-                        val packageContext = createPackageContext(packageName, Context.CONTEXT_INCLUDE_CODE or Context.CONTEXT_IGNORE_SECURITY)
-                        val value: Any = packageContext.classLoader
-                            .loadClass("com.insecureshopapp.MainInterface")
-                            .getMethod("getInstance", Context::class.java)
-                            .invoke(null, this)
-                        Log.d("object_value", value.toString())
-                    } catch (e: Exception) {
-                        throw RuntimeException(e)
-                    }
-                }
-            }
-
+            // Remove the dangerous code execution - just show the error message
             Toast.makeText(applicationContext, "Invalid username and password", Toast.LENGTH_LONG)
                 .show()
         }
+    }
+    
+    // Generate a simple session token - in production, make this more robust
+    private fun generateSessionToken(): String {
+        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return (1..30)
+            .map { allowedChars.random() }
+            .joinToString("")
     }
 }
